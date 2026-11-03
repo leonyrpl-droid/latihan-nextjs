@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { events, rupiah } from "@/events";
+import FormPesan from "@/components/FormPesan";
 
 export default async function Detail({
   params,
@@ -28,6 +29,7 @@ export default async function Detail({
       <p className="text-slate-600">
         Sisa {sisa} dari {event.kuota} tiket
       </p>
+      <FormPesan event={event} />
     </article>
   );
 }
