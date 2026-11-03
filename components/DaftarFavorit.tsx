@@ -3,31 +3,28 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import type { Event } from "@/events";
+import { events } from "@/events";
 
 export default function DaftarFavorit() {
-  const [semua, setSemua] = useState<Event[]>([]);
   const [ids, setIds] = useState<number[]>([]);
   const [memuat, setMemuat] = useState(true);
-  const [galat, setGalat] = useState("");
 
   useEffect(() => {
-    setIds(JSON.parse(localStorage.getItem("favorit") ?? "[]"));
-
-    fetch("/api/events")
-      .then((r) => {
-        if (!r.ok) throw new Error("Gagal mengambil data");
-        return r.json();
-      })
-      .then((d: Event[]) => setSemua(d))
-      .catch((e: Error) => setGalat(e.message))
-      .finally(() => setMemuat(false));
+    try {
+      const tersimpan = JSON.parse(
+        localStorage.getItem("favorit") ?? "[]",
+      );
+      setIds(Array.isArray(tersimpan) ? tersimpan : []);
+    } catch {
+      setIds([]);
+      localStorage.removeItem("favorit");
+    } finally {
+      setMemuat(false);
+    }
   }, []);
 
   if (memuat) return <p>Memuat...</p>;
-  if (galat) return <p className="text-red-600">{galat}</p>;
-
-  const daftar = semua.filter((e) => ids.includes(e.id));
+  const daftar = events.filter((e) => ids.includes(e.id));
 
   if (daftar.length === 0)
     return <p className="text-slate-500">Belum ada favorit.</p>;
