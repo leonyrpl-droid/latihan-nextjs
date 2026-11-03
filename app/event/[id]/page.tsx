@@ -1,3 +1,4 @@
+import TombolFavorit from "@/components/TombolFavorit";
 import { notFound } from "next/navigation";
 import { events, rupiah } from "@/events";
 import FormPesan from "@/components/FormPesan";
@@ -22,6 +23,7 @@ export default async function Detail({
         {event.kategori}
       </span>
       <h1 className="mt-2 text-3xl font-bold">{event.judul}</h1>
+       <TombolFavorit id={event.id} />
       <p className="mt-1 text-slate-500">
         {event.tanggal} · {event.lokasi}
       </p>
