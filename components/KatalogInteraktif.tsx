@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { Event } from "@/events";
+import { rupiah, type Event } from "@/events";
 import KartuEvent from "@/components/KartuEvents";
 
 export default function KatalogInteraktif({ events }: { events: Event[] }) {
@@ -26,6 +26,17 @@ export default function KatalogInteraktif({ events }: { events: Event[] }) {
 
     return a.tanggal.localeCompare(b.tanggal);
   });
+
+  // Menghitung rata-rata harga
+  const totalHarga = hasil.reduce((total, event) => total + event.harga, 0);
+
+  const rataRataHarga = hasil.length > 0 ? totalHarga / hasil.length : 0;
+
+  // Menghitung total sisa tiket
+  const totalSisaTiket = hasil.reduce(
+    (total, event) => total + (event.kuota - event.terisi),
+    0,
+  );
 
   return (
     <div>
@@ -72,6 +83,14 @@ export default function KatalogInteraktif({ events }: { events: Event[] }) {
 
       <p className="mb-3 text-sm text-slate-500">
         {terurut.length} event ditemukan
+      </p>
+
+      <p className="text-sm text-slate-500">
+        Rata-rata harga: {rupiah(rataRataHarga)}
+      </p>
+
+      <p className="mb-3 text-sm text-slate-500">
+        Total sisa tiket: {totalSisaTiket}
       </p>
 
       {terurut.length === 0 ? (
