@@ -3,23 +3,28 @@
 import { useState } from "react";
 import { rupiah, type Event } from "@/events";
 import KartuEvent from "@/components/KartuEvents";
+import KontrolKatalog from "@/components/KontrolKatalog";
 
 export default function KatalogInteraktif({ events }: { events: Event[] }) {
   const [cari, setCari] = useState("");
   const [kategori, setKategori] = useState("Semua");
   const [urut, setUrut] = useState("tanggal");
   const [hanyaTersedia, setHanyaTersedia] = useState(false);
+  const [hargaMaksimal, setHargaMaksimal] = useState("");
   const [jumlahTampil, setJumlahTampil] = useState(4);
 
   const daftarKategori = ["Semua", ...new Set(events.map((e) => e.kategori))];
 
+  // Penyaringan event
   const hasil = events.filter(
     (e) =>
       e.judul.toLowerCase().includes(cari.toLowerCase()) &&
       (kategori === "Semua" || e.kategori === kategori) &&
-      (!hanyaTersedia || e.terisi < e.kuota),
+      (!hanyaTersedia || e.terisi < e.kuota) &&
+      (hargaMaksimal === "" || e.harga <= Number(hargaMaksimal)),
   );
 
+  // Pengurutan event
   const terurut = [...hasil].sort((a, b) => {
     if (urut === "murah") return a.harga - b.harga;
     if (urut === "mahal") return b.harga - a.harga;
@@ -44,59 +49,23 @@ export default function KatalogInteraktif({ events }: { events: Event[] }) {
 
   return (
     <div>
-      <div className="mb-4 flex flex-wrap gap-3">
-        <input
-          value={cari}
-          onChange={(e) => {
-            setCari(e.target.value);
-            setJumlahTampil(4);
-          }}
-          placeholder="Cari event..."
-          className="rounded border bg-white p-3"
-        />
+      {/* Komponen kontrol pencarian dan penyaringan */}
+      <KontrolKatalog
+        cari={cari}
+        setCari={setCari}
+        kategori={kategori}
+        daftarKategori={daftarKategori}
+        setKategori={setKategori}
+        urut={urut}
+        setUrut={setUrut}
+        hanyaTersedia={hanyaTersedia}
+        setHanyaTersedia={setHanyaTersedia}
+        hargaMaksimal={hargaMaksimal}
+        setHargaMaksimal={setHargaMaksimal}
+        setJumlahTampil={setJumlahTampil}
+      />
 
-        <select
-          value={kategori}
-          onChange={(e) => {
-            setKategori(e.target.value);
-            setJumlahTampil(4);
-          }}
-          className="rounded border bg-white p-3"
-        >
-          {daftarKategori.map((k) => (
-            <option key={k} value={k}>
-              {k}
-            </option>
-          ))}
-        </select>
-
-        <select
-          value={urut}
-          onChange={(e) => {
-            setUrut(e.target.value);
-            setJumlahTampil(4);
-          }}
-          className="rounded border bg-white p-3"
-        >
-          <option value="tanggal">Tanggal terdekat</option>
-          <option value="murah">Harga termurah</option>
-          <option value="mahal">Harga termahal</option>
-          <option value="nama">Nama A-Z</option>
-        </select>
-
-        <label className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            checked={hanyaTersedia}
-            onChange={(e) => {
-              setHanyaTersedia(e.target.checked);
-              setJumlahTampil(4);
-            }}
-          />
-          Tiket tersedia saja
-        </label>
-      </div>
-
+      {/* Statistik event */}
       <p className="mb-3 text-sm text-slate-500">
         {terurut.length} event ditemukan
       </p>
@@ -109,6 +78,7 @@ export default function KatalogInteraktif({ events }: { events: Event[] }) {
         Total sisa tiket: {totalSisaTiket}
       </p>
 
+      {/* Daftar event */}
       {terurut.length === 0 ? (
         <p className="text-slate-500">Tidak ada event yang cocok.</p>
       ) : (
@@ -119,6 +89,7 @@ export default function KatalogInteraktif({ events }: { events: Event[] }) {
             ))}
           </div>
 
+          {/* Tombol tampilkan lagi */}
           {jumlahTampil < terurut.length && (
             <div className="mt-6 text-center">
               <button
