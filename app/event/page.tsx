@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { events } from "@/events";
 import KatalogInteraktif from "@/components/KatalogInteraktif";
 
