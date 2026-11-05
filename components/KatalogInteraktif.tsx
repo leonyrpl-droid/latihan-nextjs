@@ -9,6 +9,7 @@ export default function KatalogInteraktif({ events }: { events: Event[] }) {
   const [kategori, setKategori] = useState("Semua");
   const [urut, setUrut] = useState("tanggal");
   const [hanyaTersedia, setHanyaTersedia] = useState(false);
+  const [jumlahTampil, setJumlahTampil] = useState(4);
 
   const daftarKategori = ["Semua", ...new Set(events.map((e) => e.kategori))];
 
@@ -38,19 +39,28 @@ export default function KatalogInteraktif({ events }: { events: Event[] }) {
     0,
   );
 
+  // Membatasi jumlah event yang ditampilkan
+  const eventTampil = terurut.slice(0, jumlahTampil);
+
   return (
     <div>
       <div className="mb-4 flex flex-wrap gap-3">
         <input
           value={cari}
-          onChange={(e) => setCari(e.target.value)}
+          onChange={(e) => {
+            setCari(e.target.value);
+            setJumlahTampil(4);
+          }}
           placeholder="Cari event..."
           className="rounded border bg-white p-3"
         />
 
         <select
           value={kategori}
-          onChange={(e) => setKategori(e.target.value)}
+          onChange={(e) => {
+            setKategori(e.target.value);
+            setJumlahTampil(4);
+          }}
           className="rounded border bg-white p-3"
         >
           {daftarKategori.map((k) => (
@@ -62,7 +72,10 @@ export default function KatalogInteraktif({ events }: { events: Event[] }) {
 
         <select
           value={urut}
-          onChange={(e) => setUrut(e.target.value)}
+          onChange={(e) => {
+            setUrut(e.target.value);
+            setJumlahTampil(4);
+          }}
           className="rounded border bg-white p-3"
         >
           <option value="tanggal">Tanggal terdekat</option>
@@ -75,7 +88,10 @@ export default function KatalogInteraktif({ events }: { events: Event[] }) {
           <input
             type="checkbox"
             checked={hanyaTersedia}
-            onChange={(e) => setHanyaTersedia(e.target.checked)}
+            onChange={(e) => {
+              setHanyaTersedia(e.target.checked);
+              setJumlahTampil(4);
+            }}
           />
           Tiket tersedia saja
         </label>
@@ -96,11 +112,24 @@ export default function KatalogInteraktif({ events }: { events: Event[] }) {
       {terurut.length === 0 ? (
         <p className="text-slate-500">Tidak ada event yang cocok.</p>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {terurut.map((e) => (
-            <KartuEvent key={e.id} event={e} />
-          ))}
-        </div>
+        <>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {eventTampil.map((e) => (
+              <KartuEvent key={e.id} event={e} />
+            ))}
+          </div>
+
+          {jumlahTampil < terurut.length && (
+            <div className="mt-6 text-center">
+              <button
+                onClick={() => setJumlahTampil((sebelumnya) => sebelumnya + 4)}
+                className="rounded-lg bg-blue-600 px-5 py-2 text-white hover:bg-blue-700"
+              >
+                Tampilkan lagi
+              </button>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
