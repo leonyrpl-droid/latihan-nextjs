@@ -1,34 +1,37 @@
 "use client";
 
 import { useActionState } from "react";
-import { kirimPesan, type FormState } from "@/app/actions";
+import { pesanTiket, type HasilPesan } from "@/app/actions";
 import type { Event } from "@/events";
 
-const initialState: FormState = {
-  success: false,
-  message: "",
-  errors: {},
+const initialState: HasilPesan = {
+  berhasil: false,
+  pesan: "",
+  galat: {},
+  isian: {
+    nama: "",
+    email: "",
+  },
 };
 
 export default function FormPesan({ event }: { event: Event }) {
-  const [state, formAction, pending] = useActionState(kirimPesan, initialState);
-
-  const sisaKuota = event.kuota - event.terisi;
+  const [state, formAction, pending] = useActionState(pesanTiket, initialState);
 
   return (
     <form action={formAction} className="mt-6 space-y-4">
-      <input type="hidden" name="sisaKuota" value={sisaKuota} />
+      <input type="hidden" name="eventId" value={event.id} />
 
       <div>
         <label className="mb-1 block font-medium">Nama Lengkap</label>
         <input
           type="text"
           name="nama"
+          defaultValue={state.isian.nama}
           placeholder="Masukkan nama lengkap"
           className="w-full rounded-lg border p-3"
         />
-        {state.errors.nama && (
-          <p className="mt-1 text-sm text-red-600">{state.errors.nama}</p>
+        {state.galat.nama && (
+          <p className="mt-1 text-sm text-red-600">{state.galat.nama}</p>
         )}
       </div>
 
@@ -37,11 +40,12 @@ export default function FormPesan({ event }: { event: Event }) {
         <input
           type="email"
           name="email"
+          defaultValue={state.isian.email}
           placeholder="Masukkan email"
           className="w-full rounded-lg border p-3"
         />
-        {state.errors.email && (
-          <p className="mt-1 text-sm text-red-600">{state.errors.email}</p>
+        {state.galat.email && (
+          <p className="mt-1 text-sm text-red-600">{state.galat.email}</p>
         )}
       </div>
 
@@ -51,17 +55,22 @@ export default function FormPesan({ event }: { event: Event }) {
           type="number"
           name="jumlah"
           min="1"
+          max="5"
           placeholder="Masukkan jumlah tiket"
           className="w-full rounded-lg border p-3"
         />
-        {state.errors.jumlah && (
-          <p className="mt-1 text-sm text-red-600">{state.errors.jumlah}</p>
+        {state.galat.jumlah && (
+          <p className="mt-1 text-sm text-red-600">{state.galat.jumlah}</p>
         )}
       </div>
 
-      {state.message && (
-        <p className={state.success ? "text-green-600" : "text-red-600"}>
-          {state.message}
+      {state.pesan && (
+        <p
+          className={
+            state.berhasil ? "text-sm text-green-600" : "text-sm text-red-600"
+          }
+        >
+          {state.pesan}
         </p>
       )}
 
