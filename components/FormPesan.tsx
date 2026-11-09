@@ -1,82 +1,76 @@
-
 "use client";
 
-import { useState } from "react";
-import { rupiah, type Event } from "@/events";
-import type { FormEvent } from "react";
+import { useActionState } from "react";
+import { kirimPesan, type FormState } from "@/app/actions";
+import type { Event } from "@/events";
+
+const initialState: FormState = {
+  success: false,
+  message: "",
+  errors: {},
+};
 
 export default function FormPesan({ event }: { event: Event }) {
-  const sisa = event.kuota - event.terisi;
-  const [nama, setNama] = useState("");
-  const [jumlah, setJumlah] = useState(1);
-  const [pesan, setPesan] = useState("");
-  const [berhasil, setBerhasil] = useState(false);
+  const [state, formAction, pending] = useActionState(kirimPesan, initialState);
 
-  function kirim(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setBerhasil(false);
-
-    if (nama.trim().length < 3) {
-      return setPesan("Nama minimal 3 huruf.");
-    }
-    if (jumlah < 1) {
-      return setPesan("Jumlah tiket minimal 1.");
-    }
-    if (!Number.isInteger(jumlah)) {
-      return setPesan("Jumlah tiket harus berupa angka bulat.");
-    }
-    if (jumlah > sisa) {
-      return setPesan("Sisa tiket hanya tersedia " + sisa + ".");
-    }
-
-    setPesan("");
-    setBerhasil(true);
-  }
-
-  if (sisa === 0) {
-    return <p className="mt-6 font-medium text-red-600">Tiket sudah habis.</p>;
-  }
+  const sisaKuota = event.kuota - event.terisi;
 
   return (
-    <form onSubmit={kirim} className="mt-6 space-y-3 border-t pt-4">
-      <h2 className="text-lg font-semibold">Pesan Tiket</h2>
+    <form action={formAction} className="mt-6 space-y-4">
+      <input type="hidden" name="sisaKuota" value={sisaKuota} />
 
-      <input
-        value={nama}
-        onChange={(e) => setNama(e.target.value)}
-        placeholder="Nama pemesan"
-        className="w-full rounded border px-3 py-2"
-      />
+      <div>
+        <label className="mb-1 block font-medium">Nama Lengkap</label>
+        <input
+          type="text"
+          name="nama"
+          placeholder="Masukkan nama lengkap"
+          className="w-full rounded-lg border p-3"
+        />
+        {state.errors.nama && (
+          <p className="mt-1 text-sm text-red-600">{state.errors.nama}</p>
+        )}
+      </div>
 
-      <input
-        type="number"
-        min="1"
-        max={sisa}
-        step="1"
-        value={jumlah}
-        onChange={(e) => setJumlah(Number(e.target.value))}
-        className="block w-32 rounded border px-3 py-2"
-      />
+      <div>
+        <label className="mb-1 block font-medium">Email</label>
+        <input
+          type="email"
+          name="email"
+          placeholder="Masukkan email"
+          className="w-full rounded-lg border p-3"
+        />
+        {state.errors.email && (
+          <p className="mt-1 text-sm text-red-600">{state.errors.email}</p>
+        )}
+      </div>
 
-      <p>
-        Total: <b>{rupiah(event.harga * jumlah)}</b>
-      </p>
+      <div>
+        <label className="mb-1 block font-medium">Jumlah Tiket</label>
+        <input
+          type="number"
+          name="jumlah"
+          min="1"
+          placeholder="Masukkan jumlah tiket"
+          className="w-full rounded-lg border p-3"
+        />
+        {state.errors.jumlah && (
+          <p className="mt-1 text-sm text-red-600">{state.errors.jumlah}</p>
+        )}
+      </div>
 
-      {pesan && (
-        <p className="text-sm text-red-600">{pesan}</p>
-      )}
-
-      {berhasil && (
-        <p className="text-green-700">
-          Terima kasih {nama}! Jumlah {jumlah} tiket dipesan (belum tersimpan, ini masih latihan).
+      {state.message && (
+        <p className={state.success ? "text-green-600" : "text-red-600"}>
+          {state.message}
         </p>
       )}
 
       <button
         type="submit"
-        className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+        disabled={pending}
+        className="w-full rounded-lg bg-blue-600 p-3 font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
       >
-        Pesan
+        {pending ? "Memproses..." : "Kirim Pesanan"}
       </button>
     </form>
   );
