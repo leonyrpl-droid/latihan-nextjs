@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { events } from "@/events";
 import { tambahPesanan } from "@/data/pesanan";
 
@@ -81,6 +82,10 @@ export async function pesanTiket(
     total: event.harga * jumlah,
     waktu: new Date().toISOString(),
   });
+
+  revalidatePath("/event");
+  revalidatePath(`/event/${eventId}`);
+  revalidatePath("/pesanan");
 
   return {
     berhasil: true,
