@@ -1,14 +1,21 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { pesanan } from "@/data/pesanan";
 import { rupiah } from "@/events";
 
-export default function HalamanPesanan() {
+export default async function HalamanPesanan() {
+  // Membaca nama pelanggan dari Cookie
+  const nama = (await cookies()).get("nama")?.value;
+
   const totalTiket = pesanan.reduce((t, p) => t + p.jumlah, 0);
   const pendapatan = pesanan.reduce((t, p) => t + p.total, 0);
 
   return (
     <div>
-      <h1 className="mb-2 text-2xl font-bold">Daftar Pesanan</h1>
+      {/* Sapaan pelanggan */}
+      {nama && <h1 className="mb-2 text-2xl font-bold">Halo, {nama}!</h1>}
+
+      <h2 className="mb-2 text-xl font-bold">Daftar Pesanan</h2>
 
       {pesanan.length === 0 ? (
         <p className="text-slate-500">
@@ -40,7 +47,19 @@ export default function HalamanPesanan() {
                 <tr key={p.nomor} className="border-t">
                   <td className="p-2">{p.nomor}</td>
                   <td className="p-2">{p.judul}</td>
-                  <td className="p-2">{p.nama}</td>
+
+                  <td className="p-2">
+                    <div className="flex items-center gap-2">
+                      {p.nama}
+
+                      {nama && p.nama === nama && (
+                        <span className="rounded bg-green-100 px-2 py-1 text-xs font-semibold text-green-700">
+                          Kamu
+                        </span>
+                      )}
+                    </div>
+                  </td>
+
                   <td className="p-2">{p.jumlah}</td>
                   <td className="p-2">{rupiah(p.total)}</td>
                 </tr>
