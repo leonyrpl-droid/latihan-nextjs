@@ -2,9 +2,9 @@ import Link from "next/link";
 import { cookies } from "next/headers";
 import { pesanan } from "@/data/pesanan";
 import { rupiah } from "@/events";
+import { batalkanPesanan } from "@/app/actions";
 
 export default async function HalamanPesanan() {
-  // Membaca nama pelanggan dari Cookie
   const nama = (await cookies()).get("nama")?.value;
 
   const totalTiket = pesanan.reduce((t, p) => t + p.jumlah, 0);
@@ -12,7 +12,6 @@ export default async function HalamanPesanan() {
 
   return (
     <div>
-      {/* Sapaan pelanggan */}
       {nama && <h1 className="mb-2 text-2xl font-bold">Halo, {nama}!</h1>}
 
       <h2 className="mb-2 text-xl font-bold">Daftar Pesanan</h2>
@@ -39,6 +38,7 @@ export default async function HalamanPesanan() {
                 <th className="p-2">Pemesan</th>
                 <th className="p-2">Tiket</th>
                 <th className="p-2">Total</th>
+                <th className="p-2">Aksi</th>
               </tr>
             </thead>
 
@@ -62,6 +62,18 @@ export default async function HalamanPesanan() {
 
                   <td className="p-2">{p.jumlah}</td>
                   <td className="p-2">{rupiah(p.total)}</td>
+
+                  <td className="p-2">
+                    {nama && p.nama === nama && (
+                      <form action={batalkanPesanan}>
+                        <input type="hidden" name="nomor" value={p.nomor} />
+
+                        <button className="text-red-600 underline">
+                          Batalkan
+                        </button>
+                      </form>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>

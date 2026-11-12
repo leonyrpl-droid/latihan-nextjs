@@ -3,7 +3,7 @@
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { events } from "@/events";
-import { tambahPesanan } from "@/data/pesanan";
+import { pesanan, tambahPesanan } from "@/data/pesanan";
 
 export type HasilPesan = {
   berhasil: boolean;
@@ -100,4 +100,32 @@ export async function pesanTiket(
     galat: {},
     isian: { nama, email: "" },
   };
+}
+
+// Fungsi untuk membatalkan pesanan
+export async function batalkanPesanan(formData: FormData) {
+  const nomor = Number(formData.get("nomor"));
+  const namaSaya = (await cookies()).get("nama")?.value;
+
+  const i = pesanan.findIndex((p) => p.nomor === nomor);
+
+  // Memastikan pesanan milik pelanggan yang sedang login
+  if (i === -1 || !namaSaya || pesanan[i].nama !== namaSaya) {
+    return;
+  }
+
+  // Menghapus pesanan
+  const [batal] = pesanan.splice(i, 1);
+
+  // Mengembalikan kuota tiket
+  const event = events.find((e) => e.id === batal.eventId);
+
+  if (event) {
+    event.terisi -= batal.jumlah;
+  }
+
+  // Memperbarui halaman
+  revalidatePath("/event");
+  revalidatePath(`/event/${batal.eventId}`);
+  revalidatePath("/pesanan");
 }
