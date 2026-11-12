@@ -15,13 +15,12 @@ export default function FormPesan({
     berhasil: false,
     pesan: "",
     galat: {},
-    isian: { nama: "", email: "" },
+    isian: { nama: namaAwal, email: "" },
   };
 
   const [hasil, formAction, sedang] = useActionState(pesanTiket, awal);
 
   const [jumlah, setJumlah] = useState(1);
-
   const sisa = event.kuota - event.terisi;
 
   if (sisa === 0) {
@@ -43,7 +42,6 @@ export default function FormPesan({
           placeholder="Nama lengkap"
           className="block w-full rounded border p-3"
         />
-
         {hasil.galat.nama && (
           <p className="text-sm text-red-600">{hasil.galat.nama}</p>
         )}
@@ -57,7 +55,6 @@ export default function FormPesan({
           placeholder="Email"
           className="block w-full rounded border p-3"
         />
-
         {hasil.galat.email && (
           <p className="text-sm text-red-600">{hasil.galat.email}</p>
         )}
@@ -73,7 +70,6 @@ export default function FormPesan({
           onChange={(e) => setJumlah(Number(e.target.value))}
           className="block w-32 rounded border p-3"
         />
-
         {hasil.galat.jumlah && (
           <p className="text-sm text-red-600">{hasil.galat.jumlah}</p>
         )}
