@@ -1,6 +1,8 @@
+
 import Link from "next/link";
 import TombolFavorit from "@/components/TombolFavorit";
 import { notFound } from "next/navigation";
+import { cookies } from "next/headers";
 import { events, rupiah } from "@/events";
 import FormPesan from "@/components/FormPesan";
 
@@ -15,6 +17,9 @@ export default async function Detail({
   if (!event) {
     notFound();
   }
+
+  // Mengambil nama pelanggan dari Cookie
+  const namaAwal = (await cookies()).get("nama")?.value ?? "";
 
   // Mencari event dengan kategori yang sama,
   // tetapi tidak menampilkan event yang sedang dibuka.
@@ -38,13 +43,15 @@ export default async function Detail({
         {event.tanggal} · {event.lokasi}
       </p>
 
-      <p className="mt-4 text-xl font-semibold">{rupiah(event.harga)}</p>
+      <p className="mt-4 text-xl font-semibold">
+        {rupiah(event.harga)}
+      </p>
 
       <p className="text-slate-600">
         Sisa {sisa} dari {event.kuota} tiket
       </p>
 
-      <FormPesan event={event} />
+      <FormPesan event={event} namaAwal={namaAwal} />
 
       {/* Bagian Event Terkait */}
       <section className="mt-8">
@@ -60,12 +67,16 @@ export default async function Detail({
               >
                 <h3 className="font-semibold">{e.judul}</h3>
 
-                <p className="mt-1 text-sm text-slate-500">{e.kategori}</p>
+                <p className="mt-1 text-sm text-slate-500">
+                  {e.kategori}
+                </p>
               </Link>
             ))}
           </div>
         ) : (
-          <p className="text-slate-500">Belum ada event terkait.</p>
+          <p className="text-slate-500">
+            Belum ada event terkait.
+          </p>
         )}
       </section>
     </article>

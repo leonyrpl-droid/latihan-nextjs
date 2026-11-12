@@ -1,5 +1,6 @@
 "use server";
 
+import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { events } from "@/events";
 import { tambahPesanan } from "@/data/pesanan";
@@ -29,7 +30,6 @@ export async function pesanTiket(
   const isian = { nama, email };
 
   // Pura-pura server sedang sibuk
-  // supaya tombol "Memproses..." terlihat.
   await new Promise((r) => setTimeout(r, 800));
 
   const event = events.find((e) => e.id === eventId);
@@ -70,6 +70,13 @@ export async function pesanTiket(
       isian,
     };
   }
+
+  // Menyimpan nama pelanggan ke Cookie selama 30 hari
+  const token = await cookies();
+
+  token.set("nama", nama, {
+    maxAge: 60 * 60 * 24 * 30,
+  });
 
   event.terisi += jumlah;
 

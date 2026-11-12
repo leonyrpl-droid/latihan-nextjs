@@ -4,7 +4,13 @@ import { useActionState, useState } from "react";
 import { pesanTiket, type HasilPesan } from "@/app/actions";
 import { rupiah, type Event } from "@/events";
 
-export default function FormPesan({ event }: { event: Event }) {
+export default function FormPesan({
+  event,
+  namaAwal,
+}: {
+  event: Event;
+  namaAwal: string;
+}) {
   const awal: HasilPesan = {
     berhasil: false,
     pesan: "",
@@ -15,6 +21,7 @@ export default function FormPesan({ event }: { event: Event }) {
   const [hasil, formAction, sedang] = useActionState(pesanTiket, awal);
 
   const [jumlah, setJumlah] = useState(1);
+
   const sisa = event.kuota - event.terisi;
 
   if (sisa === 0) {
@@ -32,10 +39,11 @@ export default function FormPesan({ event }: { event: Event }) {
       <div>
         <input
           name="nama"
-          defaultValue={hasil.isian.nama}
+          defaultValue={hasil.isian.nama || namaAwal}
           placeholder="Nama lengkap"
           className="block w-full rounded border p-3"
         />
+
         {hasil.galat.nama && (
           <p className="text-sm text-red-600">{hasil.galat.nama}</p>
         )}
@@ -49,6 +57,7 @@ export default function FormPesan({ event }: { event: Event }) {
           placeholder="Email"
           className="block w-full rounded border p-3"
         />
+
         {hasil.galat.email && (
           <p className="text-sm text-red-600">{hasil.galat.email}</p>
         )}
@@ -64,6 +73,7 @@ export default function FormPesan({ event }: { event: Event }) {
           onChange={(e) => setJumlah(Number(e.target.value))}
           className="block w-32 rounded border p-3"
         />
+
         {hasil.galat.jumlah && (
           <p className="text-sm text-red-600">{hasil.galat.jumlah}</p>
         )}
