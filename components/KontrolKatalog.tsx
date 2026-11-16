@@ -1,53 +1,28 @@
-type Props = {
-  cari: string;
-  setCari: (nilai: string) => void;
-  kategori: string;
-  daftarKategori: string[];
-  setKategori: (nilai: string) => void;
-  urut: string;
-  setUrut: (nilai: string) => void;
-  hanyaTersedia: boolean;
-  setHanyaTersedia: (nilai: boolean) => void;
-  hargaMaksimal: string;
-  setHargaMaksimal: (nilai: string) => void;
-  setJumlahTampil: (nilai: number) => void;
-};
+import Form from "next/form";
+import type { Saringan } from "@/data/saring";
 
 export default function KontrolKatalog({
-  cari,
-  setCari,
-  kategori,
+  s,
   daftarKategori,
-  setKategori,
-  urut,
-  setUrut,
-  hanyaTersedia,
-  setHanyaTersedia,
-  hargaMaksimal,
-  setHargaMaksimal,
-  setJumlahTampil,
-}: Props) {
+}: {
+  s: Saringan;
+  daftarKategori: string[];
+}) {
   return (
-    <div className="mb-4 flex flex-wrap gap-3">
+    <Form action="/event" className="mb-4 flex flex-wrap items-center gap-3">
       {/* Pencarian event */}
       <input
-        value={cari}
-        onChange={(e) => {
-          setCari(e.target.value);
-          setJumlahTampil(4);
-        }}
+        name="cari"
+        defaultValue={s.cari}
         placeholder="Cari event..."
-        className="rounded border bg-white p-3"
+        className="rounded border bg-white px-3 py-2"
       />
 
       {/* Pilihan kategori */}
       <select
-        value={kategori}
-        onChange={(e) => {
-          setKategori(e.target.value);
-          setJumlahTampil(4);
-        }}
-        className="rounded border bg-white p-3"
+        name="kategori"
+        defaultValue={s.kategori}
+        className="rounded border bg-white px-3 py-2"
       >
         {daftarKategori.map((k) => (
           <option key={k} value={k}>
@@ -58,12 +33,9 @@ export default function KontrolKatalog({
 
       {/* Pengurutan event */}
       <select
-        value={urut}
-        onChange={(e) => {
-          setUrut(e.target.value);
-          setJumlahTampil(4);
-        }}
-        className="rounded border bg-white p-3"
+        name="urut"
+        defaultValue={s.urut}
+        className="rounded border bg-white px-3 py-2"
       >
         <option value="tanggal">Tanggal terdekat</option>
         <option value="murah">Harga termurah</option>
@@ -71,31 +43,29 @@ export default function KontrolKatalog({
         <option value="nama">Nama A-Z</option>
       </select>
 
+      {/* Checkbox tiket tersedia */}
+      <label className="flex items-center gap-2 text-sm">
+        <input type="checkbox" name="sisa" value="1" defaultChecked={s.sisa} />
+        Hanya yang masih ada tiket
+      </label>
+
       {/* Harga maksimal */}
       <input
         type="number"
-        min="0"
-        value={hargaMaksimal}
-        onChange={(e) => {
-          setHargaMaksimal(e.target.value);
-          setJumlahTampil(4);
-        }}
+        name="max"
+        min={0}
+        defaultValue={s.max ?? ""}
         placeholder="Harga maksimal"
-        className="rounded border bg-white p-3"
+        className="w-40 rounded border bg-white px-3 py-2"
       />
 
-      {/* Checkbox tiket tersedia */}
-      <label className="flex items-center gap-2">
-        <input
-          type="checkbox"
-          checked={hanyaTersedia}
-          onChange={(e) => {
-            setHanyaTersedia(e.target.checked);
-            setJumlahTampil(4);
-          }}
-        />
-        Hanya yang masih ada tiket
-      </label>
-    </div>
+      {/* Tombol terapkan */}
+      <button
+        type="submit"
+        className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+      >
+        Terapkan
+      </button>
+    </Form>
   );
 }
