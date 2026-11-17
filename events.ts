@@ -7,7 +7,7 @@ export type Event = {
   harga: number;
   kuota: number;
   terisi: number;
-  gambar?: string;
+  gambar?: string | null;
 };
 
 export const events: Event[] = [
