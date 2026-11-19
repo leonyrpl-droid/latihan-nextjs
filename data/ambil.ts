@@ -1,51 +1,50 @@
-
-import { events, type Event } from "@/events";
 import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase-admin";
+import type { Event } from "@/events";
 
-// Pura-pura mengambil data dari database yang agak lambat.
-function jeda(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-// Mengambil semua event dari Supabase bila konfigurasi tersedia.
-// Jika environment variable belum di-set, fallback ke data lokal.
 export async function ambilEvents(): Promise<Event[]> {
-  const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_PUBLISHABLE_KEY;
+  const { data, error } = await supabase
+    .from("events")
+    .select("*")
+    .order("tanggal");
 
-  if (!url || !key) {
-    return events;
-  }
-
-  try {
-    const { data, error } = await supabase
-      .from("events")
-      .select("*")
-      .order("tanggal");
-
-    if (error) {
-      throw new Error("Gagal memuat event: " + error.message);
-    }
-
-    return (data ?? []) as Event[];
-  } catch {
-    return events;
-  }
+  if (error) throw new Error("Gagal memuat event: " + error.message);
+  return data as Event[];
 }
 
-// Mengambil satu event berdasarkan ID.
-// Untuk sementara masih menggunakan data lokal.
-export async function ambilEvent(id: number) {
-  await jeda(800);
-  return events.find((e) => e.id === id);
+export async function ambilEvent(id: number): Promise<Event | null> {
+  // ID dari URL bisa saja tidak valid (misalnya /event/abc). Periksa dulu sebelum bertanya ke database.
+  if (!Number.isInteger(id)) return null;
+
+  const { data, error } = await supabaseAdmin
+    .from("events")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error) throw new Error("Gagal memuat event: " + error.message);
+  return data as Event | null;
 }
 
-// Mengambil event terkait.
-// Untuk sementara masih menggunakan data lokal.
-export async function ambilTerkait(event: Event) {
-  await jeda(2000);
+export async function ambilTerkait(event: Event): Promise<Event[]> {
+  const { data, error } = await supabase
+    .from("events")
+    .select("*")
+    .eq("kategori", event.kategori)
+    .neq("id", event.id)
+    .order("tanggal");
 
-  return events.filter(
-    (e) => e.kategori === event.kategori && e.id !== event.id,
-  );
+  if (error) throw new Error("Gagal memuat event terkait: " + error.message);
+  return data as Event[];
+}
+
+// Pesanan bersifat nama dan email orang, jadi dibaca memakai kunci rahasia (hanya di server).
+export async function hitungPesanan(eventId: number): Promise<number> {
+  const { count, error } = await supabaseAdmin
+    .from("pesanan")
+    .select("*", { count: "exact", head: true })
+    .eq("event_id", eventId);
+
+  if (error) throw new Error("Gagal menghitung pesanan: " + error.message);
+  return count ?? 0;
 }
