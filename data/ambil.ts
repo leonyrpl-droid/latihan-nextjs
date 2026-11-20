@@ -1,6 +1,7 @@
 import { supabase } from "@/lib/supabase";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import type { Event } from "@/events";
+import type { Pesanan } from "@/data/pesanan";
 
 export async function ambilEvents(): Promise<Event[]> {
   const { data, error } = await supabase
@@ -13,7 +14,7 @@ export async function ambilEvents(): Promise<Event[]> {
 }
 
 export async function ambilEvent(id: number): Promise<Event | null> {
-  // ID dari URL bisa saja tidak valid (misalnya /event/abc). Periksa dulu sebelum bertanya ke database.
+  // Periksa ID sebelum mengambil data dari database.
   if (!Number.isInteger(id)) return null;
 
   const { data, error } = await supabaseAdmin
@@ -62,4 +63,16 @@ export async function hitungTiketPesanan(eventId: number): Promise<number> {
     (total, pesanan) => total + Number(pesanan.jumlah),
     0,
   );
+}
+
+// Mengambil semua pesanan beserta judul event.
+export async function ambilPesanan(): Promise<Pesanan[]> {
+  const { data, error } = await supabaseAdmin
+    .from("pesanan")
+    .select("*, events(judul)")
+    .order("nomor", { ascending: false });
+
+  if (error) throw new Error("Gagal memuat pesanan: " + error.message);
+
+  return data as Pesanan[];
 }
