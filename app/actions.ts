@@ -2,25 +2,18 @@
 
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
-import { events } from "@/events";
-import { pesanan, tambahPesanan } from "@/data/pesanan";
+import { ambilEvent } from "@/data/ambil";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 
 export type HasilPesan = {
   berhasil: boolean;
   pesan: string;
-  galat: {
-    nama?: string;
-    email?: string;
-    jumlah?: string;
-  };
-  isian: {
-    nama: string;
-    email: string;
-  };
+  galat: { nama?: string; email?: string; jumlah?: string };
+  isian: { nama: string; email: string };
 };
 
 export async function pesanTiket(
-  _state: HasilPesan,
+  _sebelum: HasilPesan,
   formData: FormData,
 ): Promise<HasilPesan> {
   const eventId = Number(formData.get("eventId"));
@@ -29,10 +22,8 @@ export async function pesanTiket(
   const jumlah = Number(formData.get("jumlah"));
   const isian = { nama, email };
 
-  // Pura-pura server sedang sibuk
-  await new Promise((r) => setTimeout(r, 800));
-
-  const event = events.find((e) => e.id === eventId);
+  // Membaca event langsung dari database.
+  const event = await ambilEvent(eventId);
 
   if (!event) {
     return {
@@ -48,6 +39,8 @@ export async function pesanTiket(
 
   if (nama.length < 3) {
     galat.nama = "Nama minimal 3 huruf.";
+  } else if (nama.length > 40) {
+    galat.nama = "Nama maksimal 40 huruf.";
   }
 
   if (!email.includes("@")) {
@@ -71,23 +64,48 @@ export async function pesanTiket(
     };
   }
 
-  // Menyimpan nama pelanggan ke Cookie selama 30 hari
-  const token = await cookies();
+  // Menyimpan pesanan ke database.
+  const { data: baru, error } = await supabaseAdmin
+    .from("pesanan")
+    .insert({
+      event_id: eventId,
+      nama,
+      email,
+      jumlah,
+      total: event.harga * jumlah,
+    })
+    .select("nomor")
+    .single();
 
-  token.set("nama", nama, {
+  if (error) {
+    return {
+      berhasil: false,
+      pesan: "Pesanan gagal disimpan. Coba lagi.",
+      galat: {},
+      isian,
+    };
+  }
+
+  // Memperbarui jumlah tiket yang terisi.
+  const { error: galatKuota } = await supabaseAdmin
+    .from("events")
+    .update({ terisi: event.terisi + jumlah })
+    .eq("id", eventId);
+
+  if (galatKuota) {
+    return {
+      berhasil: false,
+      pesan:
+        "Pesanan tersimpan, tetapi kuota gagal diperbarui. Hubungi panitia.",
+      galat: {},
+      isian,
+    };
+  }
+
+  const toples = await cookies();
+
+  toples.set("nama", nama, {
     maxAge: 60 * 60 * 24 * 30,
-  });
-
-  event.terisi += jumlah;
-
-  const nomor = tambahPesanan({
-    eventId,
-    judul: event.judul,
-    nama,
-    email,
-    jumlah,
-    total: event.harga * jumlah,
-    waktu: new Date().toISOString(),
   });
 
   revalidatePath("/event");
@@ -96,36 +114,42 @@ export async function pesanTiket(
 
   return {
     berhasil: true,
-    pesan: `Pesanan #${nomor} tersimpan: ${jumlah} tiket untuk ${nama}.`,
+    pesan: `Pesanan #${baru.nomor} tersimpan: ${jumlah} tiket untuk ${nama}.`,
     galat: {},
-    isian: { nama, email: "" },
+    isian: { nama: "", email: "" },
   };
 }
 
-// Fungsi untuk membatalkan pesanan
 export async function batalkanPesanan(formData: FormData) {
   const nomor = Number(formData.get("nomor"));
   const namaSaya = (await cookies()).get("nama")?.value;
 
-  const i = pesanan.findIndex((p) => p.nomor === nomor);
+  if (!Number.isInteger(nomor) || !namaSaya) return;
 
-  // Memastikan pesanan milik pelanggan yang sedang login
-  if (i === -1 || !namaSaya || pesanan[i].nama !== namaSaya) {
-    return;
-  }
+  // Menghapus hanya pesanan milik pengguna sendiri.
+  const { data: batal } = await supabaseAdmin
+    .from("pesanan")
+    .delete()
+    .eq("nomor", nomor)
+    .eq("nama", namaSaya)
+    .select()
+    .maybeSingle();
 
-  // Menghapus pesanan
-  const [batal] = pesanan.splice(i, 1);
+  if (!batal) return;
 
-  // Mengembalikan kuota tiket
-  const event = events.find((e) => e.id === batal.eventId);
+  // Mengembalikan kuota tiket.
+  const event = await ambilEvent(batal.event_id);
 
   if (event) {
-    event.terisi -= batal.jumlah;
+    await supabaseAdmin
+      .from("events")
+      .update({
+        terisi: Math.max(0, event.terisi - batal.jumlah),
+      })
+      .eq("id", batal.event_id);
   }
 
-  // Memperbarui halaman
   revalidatePath("/event");
-  revalidatePath(`/event/${batal.eventId}`);
+  revalidatePath(`/event/${batal.event_id}`);
   revalidatePath("/pesanan");
 }
