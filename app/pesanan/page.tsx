@@ -1,20 +1,27 @@
-import Link from "next/link";
+import type { Metadata } from "next";
 import { cookies } from "next/headers";
-import { pesanan } from "@/data/pesanan";
+import Link from "next/link";
+import { ambilPesanan } from "@/data/ambil";
 import { rupiah } from "@/events";
 import { batalkanPesanan } from "@/app/actions";
 
-export default async function HalamanPesanan() {
-  const nama = (await cookies()).get("nama")?.value;
+export const metadata: Metadata = { title: "Daftar Pesanan" };
 
+export default async function HalamanPesanan() {
+  const pesanan = await ambilPesanan();
+  const namaSaya = (await cookies()).get("nama")?.value ?? "";
   const totalTiket = pesanan.reduce((t, p) => t + p.jumlah, 0);
   const pendapatan = pesanan.reduce((t, p) => t + p.total, 0);
 
   return (
     <div>
-      {nama && <h1 className="mb-2 text-2xl font-bold">Halo, {nama}!</h1>}
+      <h1 className="mb-2 text-2xl font-bold">Daftar Pesanan</h1>
 
-      <h2 className="mb-2 text-xl font-bold">Daftar Pesanan</h2>
+      {namaSaya && (
+        <p className="mb-2 text-slate-600">
+          Halo, {namaSaya}! Pesananmu ditandai &quot;Kamu&quot;.
+        </p>
+      )}
 
       {pesanan.length === 0 ? (
         <p className="text-slate-500">
@@ -26,7 +33,7 @@ export default async function HalamanPesanan() {
       ) : (
         <>
           <p className="mb-3 text-sm text-slate-500">
-            {pesanan.length} pesanan - {totalTiket} tiket - pendapatan{" "}
+            {pesanan.length} pesanan · {totalTiket} tiket · pendapatan{" "}
             {rupiah(pendapatan)}
           </p>
 
@@ -38,7 +45,7 @@ export default async function HalamanPesanan() {
                 <th className="p-2">Pemesan</th>
                 <th className="p-2">Tiket</th>
                 <th className="p-2">Total</th>
-                <th className="p-2">Aksi</th>
+                <th className="p-2"></th>
               </tr>
             </thead>
 
@@ -46,28 +53,28 @@ export default async function HalamanPesanan() {
               {pesanan.map((p) => (
                 <tr key={p.nomor} className="border-t">
                   <td className="p-2">{p.nomor}</td>
-                  <td className="p-2">{p.judul}</td>
 
                   <td className="p-2">
-                    <div className="flex items-center gap-2">
-                      {p.nama}
+                    {p.events?.judul ?? "(event dihapus)"}
+                  </td>
 
-                      {nama && p.nama === nama && (
-                        <span className="rounded bg-green-100 px-2 py-1 text-xs font-semibold text-green-700">
-                          Kamu
-                        </span>
-                      )}
-                    </div>
+                  <td className="p-2">
+                    {p.nama}
+                    {p.nama === namaSaya && (
+                      <span className="ml-2 rounded bg-green-100 px-2 py-0.5 text-xs text-green-700">
+                        Kamu
+                      </span>
+                    )}
                   </td>
 
                   <td className="p-2">{p.jumlah}</td>
+
                   <td className="p-2">{rupiah(p.total)}</td>
 
                   <td className="p-2">
-                    {nama && p.nama === nama && (
+                    {p.nama === namaSaya && (
                       <form action={batalkanPesanan}>
                         <input type="hidden" name="nomor" value={p.nomor} />
-
                         <button className="text-red-600 underline">
                           Batalkan
                         </button>
