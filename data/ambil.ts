@@ -38,7 +38,7 @@ export async function ambilTerkait(event: Event): Promise<Event[]> {
   return data as Event[];
 }
 
-// Pesanan bersifat nama dan email orang, jadi dibaca memakai kunci rahasia (hanya di server).
+// Menghitung jumlah pesanan untuk satu event.
 export async function hitungPesanan(eventId: number): Promise<number> {
   const { count, error } = await supabaseAdmin
     .from("pesanan")
@@ -47,4 +47,19 @@ export async function hitungPesanan(eventId: number): Promise<number> {
 
   if (error) throw new Error("Gagal menghitung pesanan: " + error.message);
   return count ?? 0;
+}
+
+// Menghitung total tiket yang dipesan untuk satu event.
+export async function hitungTiketPesanan(eventId: number): Promise<number> {
+  const { data, error } = await supabaseAdmin
+    .from("pesanan")
+    .select("jumlah")
+    .eq("event_id", eventId);
+
+  if (error) throw new Error("Gagal menghitung tiket: " + error.message);
+
+  return (data ?? []).reduce(
+    (total, pesanan) => total + Number(pesanan.jumlah),
+    0,
+  );
 }

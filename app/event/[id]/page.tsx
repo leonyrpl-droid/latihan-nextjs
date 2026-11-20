@@ -1,11 +1,10 @@
-
 import { Suspense } from "react";
 import Image from "next/image";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { cookies } from "next/headers";
 import { rupiah } from "@/events";
-import { ambilEvent, hitungPesanan } from "@/data/ambil";
+import { ambilEvent, hitungPesanan, hitungTiketPesanan } from "@/data/ambil";
 import FormPesan from "@/components/FormPesan";
 import TombolFavorit from "@/components/TombolFavorit";
 import EventTerkait from "@/components/EventTerkait";
@@ -24,14 +23,13 @@ export async function generateMetadata({
   };
 }
 
-export default async function Detail({
-  params,
-}: PageProps<"/event/[id]">) {
+export default async function Detail({ params }: PageProps<"/event/[id]">) {
   const { id } = await params;
   const event = await ambilEvent(Number(id));
   if (!event) notFound();
 
   const jumlahPesanan = await hitungPesanan(event.id);
+  const jumlahTiket = await hitungTiketPesanan(event.id);
   const sisa = event.kuota - event.terisi;
   const namaAwal = (await cookies()).get("nama")?.value ?? "";
 
@@ -68,6 +66,10 @@ export default async function Detail({
         {jumlahPesanan} pesanan masuk lewat EventKu
       </p>
 
+      <p className="text-sm text-slate-500">
+        {jumlahTiket} tiket dipesan lewat EventKu
+      </p>
+
       <TombolFavorit id={event.id} />
 
       <FormPesan event={event} namaAwal={namaAwal} />
@@ -76,9 +78,7 @@ export default async function Detail({
         <h2 className="font-semibold">Event terkait</h2>
 
         <Suspense
-          fallback={
-            <p className="text-slate-400">Memuat event terkait...</p>
-          }
+          fallback={<p className="text-slate-400">Memuat event terkait...</p>}
         >
           <EventTerkait event={event} />
         </Suspense>
