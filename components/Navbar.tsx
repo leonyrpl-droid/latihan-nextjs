@@ -20,6 +20,10 @@ export default function Navbar() {
       <Link href="/tentang" className="text-slate-600 hover:text-blue-600">
         Tentang
       </Link>
+
+      <Link href="/admin" className="text-slate-600 hover:text-blue-600">
+        Admin
+      </Link>
     </nav>
   );
 }
