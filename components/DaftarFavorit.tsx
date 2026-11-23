@@ -2,7 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 import Link from "next/link";
-import { events } from "@/events";
+import type { Event } from "@/events";
 
 function bacaFavorit() {
   try {
@@ -26,7 +26,7 @@ function favoritServer() {
   return "[]";
 }
 
-export default function DaftarFavorit() {
+export default function DaftarFavorit({ events }: { events: Event[] }) {
   const data = useSyncExternalStore(langganan, bacaFavorit, favoritServer);
 
   let ids: number[] = [];

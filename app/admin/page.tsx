@@ -1,11 +1,18 @@
 import Link from "next/link";
 import { ambilEvents } from "@/data/ambil";
 import { rupiah } from "@/events";
-import { hapusEvent } from "@/app/admin/actions";
+import TombolHapusEvent from "@/components/TombolHapusEvent";
 
 export default async function Admin({ searchParams }: PageProps<"/admin">) {
-  const { info, galat } = await searchParams;
-  const events = await ambilEvents();
+  const { info, galat, q } = await searchParams;
+
+  const kataKunci = typeof q === "string" ? q.trim() : "";
+
+  const semuaEvent = await ambilEvents();
+
+  const events = semuaEvent.filter((event) =>
+    event.judul.toLowerCase().includes(kataKunci.toLowerCase()),
+  );
 
   return (
     <div>
@@ -32,6 +39,24 @@ export default async function Admin({ searchParams }: PageProps<"/admin">) {
         </p>
       )}
 
+      {/* Form pencarian */}
+      <form action="/admin" method="GET" className="mb-4 flex gap-2">
+        <input
+          type="search"
+          name="q"
+          placeholder="Cari judul event..."
+          defaultValue={kataKunci}
+          className="w-full rounded-lg border px-4 py-2"
+        />
+
+        <button
+          type="submit"
+          className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+        >
+          Cari
+        </button>
+      </form>
+
       <table className="w-full rounded-xl border bg-white text-sm">
         <thead className="bg-slate-100 text-left">
           <tr>
@@ -44,29 +69,34 @@ export default async function Admin({ searchParams }: PageProps<"/admin">) {
         </thead>
 
         <tbody>
-          {events.map((e) => (
-            <tr key={e.id} className="border-t">
-              <td className="p-2">{e.judul}</td>
-              <td className="p-2">{e.tanggal}</td>
-              <td className="p-2">{rupiah(e.harga)}</td>
-              <td className="p-2">
-                {e.terisi}/{e.kuota}
-              </td>
-              <td className="flex gap-3 p-2">
-                <Link
-                  href={`/admin/${e.id}/ubah`}
-                  className="text-blue-600 underline"
-                >
-                  Ubah
-                </Link>
+          {events.length > 0 ? (
+            events.map((e) => (
+              <tr key={e.id} className="border-t">
+                <td className="p-2">{e.judul}</td>
+                <td className="p-2">{e.tanggal}</td>
+                <td className="p-2">{rupiah(e.harga)}</td>
+                <td className="p-2">
+                  {e.terisi}/{e.kuota}
+                </td>
+                <td className="flex gap-3 p-2">
+                  <Link
+                    href={`/admin/${e.id}/ubah`}
+                    className="text-blue-600 underline"
+                  >
+                    Ubah
+                  </Link>
 
-                <form action={hapusEvent}>
-                  <input type="hidden" name="id" value={e.id} />
-                  <button className="text-red-600 underline">Hapus</button>
-                </form>
+                  <TombolHapusEvent id={e.id} />
+                </td>
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td colSpan={5} className="p-4 text-center text-slate-500">
+                Event tidak ditemukan.
               </td>
             </tr>
-          ))}
+          )}
         </tbody>
       </table>
     </div>
