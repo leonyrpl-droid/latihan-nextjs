@@ -1,21 +1,34 @@
+
 import { Suspense } from "react";
 import Image from "next/image";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { cookies } from "next/headers";
+
 import { rupiah } from "@/events";
-import { ambilEvent, hitungPesanan, hitungTiketPesanan } from "@/data/ambil";
+import {
+  ambilEvent,
+  hitungPesanan,
+  hitungTiketPesanan,
+} from "@/data/ambil";
+
 import FormPesan from "@/components/FormPesan";
 import TombolFavorit from "@/components/TombolFavorit";
 import EventTerkait from "@/components/EventTerkait";
 
+type Props = {
+  params: Promise<{ id: string }>;
+};
+
 export async function generateMetadata({
   params,
-}: PageProps<"/event/[id]">): Promise<Metadata> {
+}: Props): Promise<Metadata> {
   const { id } = await params;
   const event = await ambilEvent(Number(id));
 
-  if (!event) return { title: "Event tidak ditemukan" };
+  if (!event) {
+    return { title: "Event tidak ditemukan" };
+  }
 
   return {
     title: event.judul,
@@ -23,13 +36,19 @@ export async function generateMetadata({
   };
 }
 
-export default async function Detail({ params }: PageProps<"/event/[id]">) {
+export default async function Detail({ params }: Props) {
   const { id } = await params;
   const event = await ambilEvent(Number(id));
-  if (!event) notFound();
 
-  const jumlahPesanan = await hitungPesanan(event.id);
-  const jumlahTiket = await hitungTiketPesanan(event.id);
+  if (!event) {
+    notFound();
+  }
+
+  const [jumlahPesanan, jumlahTiket] = await Promise.all([
+    hitungPesanan(event.id),
+    hitungTiketPesanan(event.id),
+  ]);
+
   const sisa = event.kuota - event.terisi;
   const namaAwal = (await cookies()).get("nama")?.value ?? "";
 
@@ -50,25 +69,35 @@ export default async function Detail({ params }: PageProps<"/event/[id]">) {
         {event.kategori}
       </span>
 
-      <h1 className="mt-2 text-3xl font-bold">{event.judul}</h1>
+      <h1 className="mt-2 text-3xl font-bold">
+        {event.judul}
+      </h1>
 
       <p className="mt-1 text-slate-500">
         {event.tanggal} · {event.lokasi}
       </p>
 
-      <p className="mt-4 text-xl font-semibold">{rupiah(event.harga)}</p>
+      <p className="mt-4 text-xl font-semibold">
+        {rupiah(event.harga)}
+      </p>
 
       <p className="text-slate-600">
         Sisa {sisa} dari {event.kuota} tiket
       </p>
 
-      <p className="text-sm text-slate-500">
-        {jumlahPesanan} pesanan masuk lewat EventKu
-      </p>
+      <section className="mt-5 rounded-lg bg-slate-50 p-4">
+        <h2 className="mb-3 font-semibold">
+          Statistik Pesanan
+        </h2>
 
-      <p className="text-sm text-slate-500">
-        {jumlahTiket} tiket dipesan lewat EventKu
-      </p>
+        <p className="text-sm text-slate-600">
+          {jumlahPesanan} pesanan masuk lewat EventKu
+        </p>
+
+        <p className="text-sm text-slate-600">
+          {jumlahTiket} tiket dipesan lewat EventKu
+        </p>
+      </section>
 
       <TombolFavorit id={event.id} />
 
@@ -78,7 +107,11 @@ export default async function Detail({ params }: PageProps<"/event/[id]">) {
         <h2 className="font-semibold">Event terkait</h2>
 
         <Suspense
-          fallback={<p className="text-slate-400">Memuat event terkait...</p>}
+          fallback={
+            <p className="text-slate-400">
+              Memuat event terkait...
+            </p>
+          }
         >
           <EventTerkait event={event} />
         </Suspense>
